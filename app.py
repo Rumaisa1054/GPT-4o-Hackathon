@@ -26,6 +26,8 @@ def login():
         if c.fetchone() is not None:
             st.success("Logged in as {}".format(username))
             # Add redirect or further actions here
+            redirect_url = "logged.py?username={}".format(username)
+            st.experimental_set_query_params(redirect=redirect_url)
         else:
             st.error("Invalid username or password")
 
