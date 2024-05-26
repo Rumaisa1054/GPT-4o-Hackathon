@@ -22,9 +22,8 @@ def authenticate_user(username, password):
 
 # Logged-in UI
 def logged_in_ui(username):
-    st.title("Logged")
-    st.write("Welcome to the logged-in page, {}!".format(username))
-    # Add your logged-in UI components here
+    redirect_url = "/logged.py"  # Adjust this URL based on your file structure
+    st.markdown(f'<meta http-equiv="refresh" content="0;URL=/{redirect_url}">', unsafe_allow_html=True)
 
 # Main function to handle login, registration, and logged-in UI
 def main():
