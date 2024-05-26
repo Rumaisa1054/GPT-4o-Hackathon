@@ -25,9 +25,9 @@ def login():
         c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
         if c.fetchone() is not None:
             st.success("Logged in as {}".format(username))
-            # Add redirect or further actions here
+            # Redirect to logged.py after successful login
             redirect_url = "logged.py?username={}".format(username)
-            st.experimental_set_query_params(redirect=redirect_url)
+            st.query_params(redirect=redirect_url)
         else:
             st.error("Invalid username or password")
 
