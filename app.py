@@ -1,5 +1,6 @@
 import streamlit as st
 import sqlite3
+from fpdf import FPDF
 
 # Create or connect to the SQLite database
 conn = sqlite3.connect('user.db')
@@ -38,6 +39,13 @@ def course_content_ui():
 def save_as_pdf(content):
     # For demonstration purposes, we won't actually create a PDF here.
     # In a real application, you would generate a PDF from the content.
+    pdf_data = save_as_pdf(course_content)
+    st.download_button(
+        label="Download PDF",
+        data=pdf_data,
+        file_name="course_content.pdf",
+        mime="application/pdf"
+    )
     st.success("Course content saved as PDF")
 
 # Function to handle chat about confusion
