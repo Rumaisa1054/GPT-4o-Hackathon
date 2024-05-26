@@ -25,9 +25,9 @@ def login():
         c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
         if c.fetchone() is not None:
             st.success("Logged in as {}".format(username))
-            # Redirect to logged.py after successful login
-            redirect_url = "logged.py?username={}".format(username)
-            st.markdown(f"**[Click here to continue to logged page](/{redirect_url})**")  # Display clickable link
+            # Store username in session state for redirection
+            st.session_state.username = username
+            st.experimental_rerun()  # Force rerun to perform redirection
         else:
             st.error("Invalid username or password")
 
@@ -49,7 +49,6 @@ def register():
             c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (new_username, new_password))
             conn.commit()
             st.success("Registration successful for {}".format(new_username))
-            # Redirect to login page or perform further actions
 
 # Main function to switch between login and registration pages
 def main():
@@ -59,6 +58,11 @@ def main():
         login()
     elif page == "Register":
         register()
+
+    # Redirect to logged.py if logged in
+    if hasattr(st.session_state, 'username'):
+        redirect_url = "logged.py?username={}".format(st.session_state.username)
+        st.markdown(f'<meta http-equiv="refresh" content="0;URL=/{redirect_url}">', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
