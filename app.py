@@ -34,19 +34,22 @@ def course_content_ui():
         st.write(course_content)
 
         if st.button("Download Course as PDF"):
-            save_as_pdf(course_content)
-            
-def save_as_pdf(content):
-    # For demonstration purposes, we won't actually create a PDF here.
-    # In a real application, you would generate a PDF from the content.
-    pdf_data = save_as_pdf(course_content)
-    st.download_button(
-        label="Download PDF",
-        data=pdf_data,
-        file_name="course_content.pdf",
-        mime="application/pdf"
-    )
-    st.success("Course content saved as PDF")
+            pdf_data = generate_pdf(course_content)
+            st.download_button(
+                label="Download PDF",
+                data=pdf_data,
+                file_name="course_content.pdf",
+                mime="application/pdf"
+            )
+
+def generate_pdf(content):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.multi_cell(0, 10, content)
+    
+    pdf_output = pdf.output(dest='S').encode('latin1')  # 'S' means output as a string
+    return pdf_output
 
 # Function to handle chat about confusion
 def chat_ui():
