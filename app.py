@@ -42,10 +42,8 @@ def course_content_ui():
         st.subheader("Course Content for {}".format(topic))
         course_content = "This is the hardcoded course content for the topic: {}".format(topic)
         st.write(course_content)
-
-        if st.button("Generate and Download PDF"):
-            pdf_data = generate_pdf(course_content)
-            st.download_button(
+        pdf_data = generate_pdf(course_content)
+        if st.download_button(
                 label="Download PDF",
                 data=pdf_data,
                 file_name="course_content.pdf",
@@ -124,6 +122,7 @@ def main():
                     st.session_state.logged_in = True
                     st.session_state.username = new_username
                     st.experimental_rerun()
+                  
 
 if __name__ == "__main__":
     main()
