@@ -15,20 +15,10 @@ def username_exists(username):
     c.execute("SELECT * FROM users WHERE username=?", (username,))
     return c.fetchone() is not None
 
-# Login Page
-def login():
-    st.title("Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    if st.button("Login"):
-        # Check login credentials
-        c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
-        if c.fetchone() is not None:
-            st.success("Logged in as {}".format(username))
-            # Redirect to logged-in UI
-            logged_in_ui(username)
-        else:
-            st.error("Invalid username or password")
+# Function to authenticate user
+def authenticate_user(username, password):
+    c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+    return c.fetchone() is not None
 
 # Logged-in UI
 def logged_in_ui(username):
@@ -36,33 +26,34 @@ def logged_in_ui(username):
     st.write("Welcome to the logged-in page, {}!".format(username))
     # Add your logged-in UI components here
 
-# Registration Page
-def register():
-    st.title("Register")
+# Main function to handle login and registration
+def main():
+    st.title("Login/Register")
+
+    # Display login form
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if authenticate_user(username, password):
+            logged_in_ui(username)
+        else:
+            st.error("Invalid username or password")
+
+    # Display registration form
+    st.write("Don't have an account? Register here:")
     new_username = st.text_input("New Username")
     new_password = st.text_input("New Password", type="password")
     confirm_password = st.text_input("Confirm Password", type="password")
     if st.button("Register"):
-        # Check if username already exists
-        if username_exists(new_username):
-            st.error("Username already exists. Please choose another one.")
-        # Check if passwords match
-        elif new_password != confirm_password:
+        if new_password != confirm_password:
             st.error("Passwords do not match")
+        elif username_exists(new_username):
+            st.error("Username already exists. Please choose another one.")
         else:
-            # Add new user to the database
             c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (new_username, new_password))
             conn.commit()
             st.success("Registration successful for {}".format(new_username))
-
-# Main function to switch between login, registration, and logged-in UI
-def main():
-    st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ("Login", "Register"))
-    if page == "Login":
-        login()
-    elif page == "Register":
-        register()
+            logged_in_ui(new_username)
 
 if __name__ == "__main__":
     main()
