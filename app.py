@@ -27,7 +27,7 @@ def login():
             st.success("Logged in as {}".format(username))
             # Redirect to logged.py after successful login
             redirect_url = "logged.py?username={}".format(username)
-            st.experimental_set_query_params(redirect=redirect_url)  # Redirect with username in URL
+            st.markdown(f"**[Click here to continue to logged page](/{redirect_url})**")  # Display clickable link
         else:
             st.error("Invalid username or password")
 
