@@ -43,7 +43,7 @@ def course_content_ui():
         course_content = "This is the hardcoded course content for the topic: {}".format(topic)
         st.write(course_content)
         pdf_data = generate_pdf(course_content)
-        if st.download_button(
+        st.download_button(
                 label="Download PDF",
                 data=pdf_data,
                 file_name="course_content.pdf",
