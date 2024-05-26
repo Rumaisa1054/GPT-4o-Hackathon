@@ -25,11 +25,16 @@ def login():
         c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
         if c.fetchone() is not None:
             st.success("Logged in as {}".format(username))
-            # Store username in session state for redirection
-            st.session_state.username = username
-            st.experimental_rerun()  # Force rerun to perform redirection
+            # Redirect to logged-in UI
+            logged_in_ui(username)
         else:
             st.error("Invalid username or password")
+
+# Logged-in UI
+def logged_in_ui(username):
+    st.title("Logged")
+    st.write("Welcome to the logged-in page, {}!".format(username))
+    # Add your logged-in UI components here
 
 # Registration Page
 def register():
@@ -50,7 +55,7 @@ def register():
             conn.commit()
             st.success("Registration successful for {}".format(new_username))
 
-# Main function to switch between login and registration pages
+# Main function to switch between login, registration, and logged-in UI
 def main():
     st.sidebar.title("Navigation")
     page = st.sidebar.radio("Go to", ("Login", "Register"))
@@ -58,11 +63,6 @@ def main():
         login()
     elif page == "Register":
         register()
-
-    # Redirect to logged.py if logged in
-    if hasattr(st.session_state, 'username'):
-        redirect_url = "logged.py?username={}".format(st.session_state.username)
-        st.markdown(f'<meta http-equiv="refresh" content="0;URL=/{redirect_url}">', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
