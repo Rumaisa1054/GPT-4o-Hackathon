@@ -22,43 +22,75 @@ def authenticate_user(username, password):
 
 # Logged-in UI
 def logged_in_ui(username):
-    redirect_url = "/logged.py"  # Adjust this URL based on your file structure
-    st.markdown(f'<meta http-equiv="refresh" content="0;URL=/{redirect_url}">', unsafe_allow_html=True)
+    st.title("Logged In as {}".format(username))
+
+    # Input options
+    st.header("Enter Term")
+    term = st.text_input("Enter term here")
+
+    # Chat area
+    st.header("Chat Area")
+    chat_text = st.text_area("Chat with us", "")
+
+    # Save course as PDF
+    if st.button("Save Course as PDF"):
+        save_as_pdf()
+
+    # Notify completion and start evaluation
+    if st.button("Notify completion and start evaluation"):
+        notify_completion(username)
+
+def save_as_pdf():
+    # Add code to save the course content as PDF
+    st.success("Course saved as PDF")
+
+def notify_completion(username):
+    # Add code to notify completion and start evaluation
+    st.success("Completion notified and evaluation started")
 
 # Main function to handle login, registration, and logged-in UI
 def main():
-    st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ("Login", "Register"))
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+        st.session_state.username = ""
 
-    if page == "Login":
-        st.title("Login")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+    if st.session_state.logged_in:
+        logged_in_ui(st.session_state.username)
+    else:
+        st.sidebar.title("Navigation")
+        page = st.sidebar.radio("Go to", ("Login", "Register"))
 
-        if st.button("Login"):
-            if authenticate_user(username, password):
-                st.session_state.logged_in = True
-                logged_in_ui(username)
-            else:
-                st.error("Invalid username or password")
+        if page == "Login":
+            st.title("Login")
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
 
-    elif page == "Register":
-        st.title("Register")
-        new_username = st.text_input("New Username")
-        new_password = st.text_input("New Password", type="password")
-        confirm_password = st.text_input("Confirm Password", type="password")
+            if st.button("Login"):
+                if authenticate_user(username, password):
+                    st.session_state.logged_in = True
+                    st.session_state.username = username
+                    st.experimental_rerun()
+                else:
+                    st.error("Invalid username or password")
 
-        if st.button("Register"):
-            if new_password != confirm_password:
-                st.error("Passwords do not match")
-            elif username_exists(new_username):
-                st.error("Username already exists. Please choose another one.")
-            else:
-                c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (new_username, new_password))
-                conn.commit()
-                st.success("Registration successful for {}".format(new_username))
-                st.session_state.logged_in = True
-                logged_in_ui(new_username)
+        elif page == "Register":
+            st.title("Register")
+            new_username = st.text_input("New Username")
+            new_password = st.text_input("New Password", type="password")
+            confirm_password = st.text_input("Confirm Password", type="password")
+
+            if st.button("Register"):
+                if new_password != confirm_password:
+                    st.error("Passwords do not match")
+                elif username_exists(new_username):
+                    st.error("Username already exists. Please choose another one.")
+                else:
+                    c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (new_username, new_password))
+                    conn.commit()
+                    st.success("Registration successful for {}".format(new_username))
+                    st.session_state.logged_in = True
+                    st.session_state.username = new_username
+                    st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
