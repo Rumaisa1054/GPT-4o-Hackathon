@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit import auth
 import sqlite3
 
 # Create or connect to the SQLite database
@@ -9,6 +10,11 @@ c = conn.cursor()
 c.execute('''CREATE TABLE IF NOT EXISTS users
              (username TEXT PRIMARY KEY, password TEXT)''')
 conn.commit()
+
+# Function to check if a username already exists
+def username_exists(username):
+    c.execute("SELECT * FROM users WHERE username=?", (username,))
+    return c.fetchone() is not None
 
 # Function to authenticate user
 def authenticate_user(username, password):
@@ -21,18 +27,41 @@ def logged_in_ui(username):
     st.write("Welcome to the logged-in page, {}!".format(username))
     # Add your logged-in UI components here
 
-# Main function to display the login form and redirect if logged in
+# Main function to handle login, registration, and logged-in UI
 def main():
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+    if auth.authenticator.authenticate():
+        username = auth.authenticator.username
+        logged_in_ui(username)
+    else:
+        st.title("Login/Register")
 
-    if st.button("Login"):
-        if authenticate_user(username, password):
-            redirect_url = "logged.py?username={}".format(username)
-            st.markdown(f'<meta http-equiv="refresh" content="0;URL=/{redirect_url}">', unsafe_allow_html=True)
-        else:
-            st.error("Invalid username or password")
+        # Display login form
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+
+        if st.button("Login"):
+            if authenticate_user(username, password):
+                auth.authenticator.login(username)
+                logged_in_ui(username)
+            else:
+                st.error("Invalid username or password")
+
+        # Display registration form
+        st.write("Don't have an account? Register here:")
+        new_username = st.text_input("New Username")
+        new_password = st.text_input("New Password", type="password")
+        confirm_password = st.text_input("Confirm Password", type="password")
+        if st.button("Register"):
+            if new_password != confirm_password:
+                st.error("Passwords do not match")
+            elif username_exists(new_username):
+                st.error("Username already exists. Please choose another one.")
+            else:
+                c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (new_username, new_password))
+                conn.commit()
+                st.success("Registration successful for {}".format(new_username))
+                auth.authenticator.login(new_username)
+                logged_in_ui(new_username)
 
 if __name__ == "__main__":
     main()
-
