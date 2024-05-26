@@ -31,7 +31,7 @@ def generate_pdf(content):
     pdf_output = pdf.output(dest='S').encode('latin1')  # 'S' means output as a string
     return pdf_output
 
-# Function to handle course content
+# Function to handle course content and PDF generation/download
 def course_content_ui():
     st.title("Course Content")
     
@@ -43,13 +43,14 @@ def course_content_ui():
         course_content = "This is the hardcoded course content for the topic: {}".format(topic)
         st.write(course_content)
 
-        if st.button("Generate PDF"):
+        if st.button("Generate and Download PDF"):
             pdf_data = generate_pdf(course_content)
             st.download_button(
                 label="Download PDF",
                 data=pdf_data,
                 file_name="course_content.pdf",
-                mime="application/pdf"
+                mime="application/pdf",
+                key="download_pdf_button"
             )
 
 # Function to handle chat about confusion
