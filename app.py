@@ -20,33 +20,53 @@ def authenticate_user(username, password):
     c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
     return c.fetchone() is not None
 
+# Function to handle course content
+def course_content_ui():
+    st.title("Course Content")
+    
+    st.header("Enter Topic")
+    topic = st.text_input("Enter topic here")
+
+    if topic:
+        st.subheader("Course Content for {}".format(topic))
+        course_content = "This is the hardcoded course content for the topic: {}".format(topic)
+        st.write(course_content)
+
+        if st.button("Download Course as PDF"):
+            save_as_pdf(course_content)
+            
+def save_as_pdf(content):
+    # For demonstration purposes, we won't actually create a PDF here.
+    # In a real application, you would generate a PDF from the content.
+    st.success("Course content saved as PDF")
+
+# Function to handle chat about confusion
+def chat_ui():
+    st.title("Chat Area")
+    chat_text = st.text_area("Chat with us about your confusion")
+
+    if st.button("Send"):
+        st.success("Your message has been sent")
+
+# Function to handle quiz chat
+def quiz_ui():
+    st.title("Quiz Chat")
+    quiz_text = st.text_area("Chat with us about the quiz")
+
+    if st.button("Send"):
+        st.success("Your message has been sent")
+
 # Logged-in UI
 def logged_in_ui(username):
-    st.title("Logged In as {}".format(username))
+    st.sidebar.title("Navigation")
+    tab = st.sidebar.radio("Select a tab", ("Course Content", "Chat", "Quiz Chat"))
 
-    # Input options
-    st.header("Enter Term")
-    term = st.text_input("Enter term here")
-
-    # Chat area
-    st.header("Chat Area")
-    chat_text = st.text_area("Chat with us", "")
-
-    # Save course as PDF
-    if st.button("Save Course as PDF"):
-        save_as_pdf()
-
-    # Notify completion and start evaluation
-    if st.button("Notify completion and start evaluation"):
-        notify_completion(username)
-
-def save_as_pdf():
-    # Add code to save the course content as PDF
-    st.success("Course saved as PDF")
-
-def notify_completion(username):
-    # Add code to notify completion and start evaluation
-    st.success("Completion notified and evaluation started")
+    if tab == "Course Content":
+        course_content_ui()
+    elif tab == "Chat":
+        chat_ui()
+    elif tab == "Quiz Chat":
+        quiz_ui()
 
 # Main function to handle login, registration, and logged-in UI
 def main():
