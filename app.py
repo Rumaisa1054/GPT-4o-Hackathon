@@ -11,6 +11,12 @@ c.execute('''CREATE TABLE IF NOT EXISTS users
              (username TEXT PRIMARY KEY, password TEXT)''')
 conn.commit()
 
+# Create a table to store user quiz scores if it doesn't exist
+c.execute('''CREATE TABLE IF NOT EXISTS quiz_scores
+             (username TEXT, course TEXT, score INTEGER,
+              FOREIGN KEY(username) REFERENCES users(username))''')
+conn.commit()
+
 # Function to check if a username already exists
 def username_exists(username):
     c.execute("SELECT * FROM users WHERE username=?", (username,))
@@ -79,7 +85,7 @@ def chat_ui():
         # Add assistant response to chat history
         st.session_state.chat_messages.append({"role": "assistant", "content": response})
 
-# Function to handle quiz chat
+# Function to handle quiz chat and store the score
 def quiz_ui():
     st.title("Start the Quiz")
 
@@ -100,17 +106,52 @@ def quiz_ui():
         # Add user message to chat history
         st.session_state.quiz_messages.append({"role": "user", "content": prompt})
     
-        response = f"Quiz Question: What is the capital of France?"
+        response = "Quiz Question: What is the capital of France?"
+        correct_answer = "Paris"
+        
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
             st.markdown(response)
-        # Add assistant response to chat history
+        
+        if prompt.lower() == correct_answer.lower():
+            score = 100
+        else:
+            score = 0
+        
+        # Store the quiz score in the database
+        c.execute("INSERT INTO quiz_scores (username, course, score) VALUES (?, ?, ?)",
+                  (st.session_state.username, "Geography", score))
+        conn.commit()
+        
         st.session_state.quiz_messages.append({"role": "assistant", "content": response})
+        st.session_state.quiz_messages.append({"role": "assistant", "content": f"Your score: {score}/100"})
+
+# Function to display user info and quiz scores
+def user_info_ui():
+    st.title("User Info")
+    
+    c.execute("SELECT * FROM users WHERE username=?", (st.session_state.username,))
+    user_info = c.fetchone()
+    
+    if user_info:
+        st.write(f"Username: {user_info[0]}")
+    
+        st.subheader("Quiz Scores")
+        c.execute("SELECT course, score FROM quiz_scores WHERE username=?", (st.session_state.username,))
+        scores = c.fetchall()
+        
+        if scores:
+            for course, score in scores:
+                st.write(f"Course: {course}, Score: {score}/100")
+        else:
+            st.write("No quiz scores available.")
+    else:
+        st.write("User information not available.")
 
 # Logged-in UI
 def logged_in_ui(username):
     st.sidebar.title("Navigation")
-    tab = st.sidebar.radio("Select a tab", ("Course Content", "Chat", "Quiz Chat"))
+    tab = st.sidebar.radio("Select a tab", ("Course Content", "Chat", "Quiz Chat", "User Info"))
 
     if tab == "Course Content":
         course_content_ui()
@@ -118,6 +159,8 @@ def logged_in_ui(username):
         chat_ui()
     elif tab == "Quiz Chat":
         quiz_ui()
+    elif tab == "User Info":
+        user_info_ui()
 
 # Main function to handle login, registration, and logged-in UI
 def main():
@@ -162,7 +205,6 @@ def main():
                     st.session_state.logged_in = True
                     st.session_state.username = new_username
                     st.experimental_rerun()
-                  
 
 if __name__ == "__main__":
     main()
