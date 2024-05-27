@@ -51,12 +51,12 @@ def course_content_ui():
                 key="download_pdf_button"
             )
 
-# Function to handle chat about confusion
 def chat_ui():
   
     # Initialize session state to store chat history
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
+    
     # Function to display chat messages
     def display_chat_history():
         for message in st.session_state.chat_history:
@@ -75,7 +75,7 @@ def chat_ui():
     # Button to send the message
     if st.button("Send"):
         handle_input(user_input)
-        st.session_state.user_input = ""  # Clear the input box
+        st.session_state["user_input"] = ""  # Clear the input box
     
     # Display the chat history
     display_chat_history()
