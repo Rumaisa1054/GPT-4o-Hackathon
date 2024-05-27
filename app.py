@@ -53,11 +53,32 @@ def course_content_ui():
 
 # Function to handle chat about confusion
 def chat_ui():
-    st.title("Chat Area")
-    chat_text = st.text_area("Chat with us about your confusion")
-
+    # Initialize session state to store chat history
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+    # Function to display chat messages
+    def display_chat_history():
+        for message in st.session_state.chat_history:
+            st.write(message)
+    
+    # Function to handle user input
+    def handle_input(user_input):
+        st.session_state.chat_history.append(f"User: {user_input}")
+        # Here you can add the logic to generate a response from the chatbot
+        bot_response = f"Bot: You said '{user_input}'"
+        st.session_state.chat_history.append(bot_response)
+    
+    # User input text box
+    user_input = st.text_input("You: ", key="user_input")
+    
+    # Button to send the message
     if st.button("Send"):
-        st.success("Your message has been sent")
+        handle_input(user_input)
+        st.session_state.user_input = ""  # Clear the input box
+    
+    # Display the chat history
+    display_chat_history()
+
 
 # Function to handle quiz chat
 def quiz_ui():
