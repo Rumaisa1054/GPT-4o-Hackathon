@@ -53,6 +53,7 @@ def course_content_ui():
 
 # Function to handle chat about confusion
 def chat_ui():
+  
     # Initialize session state to store chat history
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
