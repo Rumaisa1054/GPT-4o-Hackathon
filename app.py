@@ -53,33 +53,32 @@ def course_content_ui():
 
 # Function to handle chat about confusion
 def chat_ui():
-    # Initialize session state to store chat history
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
+    st.title("Echo Bot")
 
-    # Function to display chat messages
-    def display_chat_history():
-        for message in st.session_state.chat_history:
-            st.write(message)
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    
+    # Display chat messages from history on a container
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+    
+    # React to user input
+    if prompt := st.chat_input("What is up?"):
+        # Display user message in chat message container
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+    
+        response = f"Echo: {prompt}"
+        # Display assistant response in chat message container
+        with st.chat_message("assistant"):
+            st.markdown(response)
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response})
 
-    # Function to handle user input
-    def handle_input(user_input):
-        st.session_state.chat_history.append(f"User: {user_input}")
-        # Here you can add the logic to generate a response from the chatbot
-        bot_response = f"Bot: You said '{user_input}'"
-        st.session_state.chat_history.append(bot_response)
-
-    # Placeholder for user input
-    user_input_placeholder = st.empty()
-    user_input = user_input_placeholder.text_input("You: ", key="user_input")
-
-    # Button to send the message
-    if st.button("Send"):
-        handle_input(user_input)
-        user_input_placeholder.text_input("You: ", value="", key="user_input")
-
-    # Display the chat history
-    display_chat_history()
 
 # Function to handle quiz chat
 def quiz_ui():
