@@ -53,61 +53,59 @@ def course_content_ui():
 
 # Function to handle chat about confusion
 def chat_ui():
-    st.title("chat Your Confusions")
+    st.title("Chat Your Confusions")
 
-    # Initialize chat history
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    # Initialize chat history for chat tab
+    if "chat_messages" not in st.session_state:
+        st.session_state.chat_messages = []
     
     # Display chat messages from history on a container
-    for message in st.session_state.messages:
+    for message in st.session_state.chat_messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
     
     # React to user input
-    if prompt := st.chat_input("What is up?"):
+    if prompt := st.chat_input("What is your confusion?"):
         # Display user message in chat message container
         with st.chat_message("user"):
             st.markdown(prompt)
         # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.session_state.chat_messages.append({"role": "user", "content": prompt})
     
-        response = f"Echo: {prompt}"
+        response = f"Assistant: It seems like you're confused about '{prompt}'. Let's clarify."
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
             st.markdown(response)
         # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response})
-
+        st.session_state.chat_messages.append({"role": "assistant", "content": response})
 
 # Function to handle quiz chat
 def quiz_ui():
-    #
-    st.title("Start the QUIZ")
+    st.title("Start the Quiz")
 
-    # Initialize chat history
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    # Initialize chat history for quiz tab
+    if "quiz_messages" not in st.session_state:
+        st.session_state.quiz_messages = []
     
     # Display chat messages from history on a container
-    for message in st.session_state.messages:
+    for message in st.session_state.quiz_messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
     
     # React to user input
-    if prompt := st.chat_input("What is up?"):
+    if prompt := st.chat_input("Ready for a quiz question?"):
         # Display user message in chat message container
         with st.chat_message("user"):
             st.markdown(prompt)
         # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.session_state.quiz_messages.append({"role": "user", "content": prompt})
     
-        response = f"Echo: {prompt}"
+        response = f"Quiz Question: What is the capital of France?"
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
             st.markdown(response)
         # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        st.session_state.quiz_messages.append({"role": "assistant", "content": response})
 
 # Logged-in UI
 def logged_in_ui(username):
