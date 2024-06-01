@@ -14,7 +14,7 @@ conn.commit()
 
 # Create a table to store user quiz scores if it doesn't exist
 c.execute('''CREATE TABLE IF NOT EXISTS quiz_scores
-             (username TEXT, course TEXT, score INTEGER,
+             (username TEXT, course TEXT, score TEXT,
               FOREIGN KEY(username) REFERENCES users(username))''')
 conn.commit()
 
@@ -28,18 +28,19 @@ def authenticate_user(username, password):
     c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
     return c.fetchone() is not None
 
-# Function to generate PDF
 def generate_pdf(content):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, content)
+    pdf.multi_cell(0, 10, content.encode('latin1', 'replace').decode('latin1'))
     
-    pdf_output = pdf.output(dest='S').encode('latin1')  # 'S' means output as a string
+    pdf_output = pdf.output(dest='S').encode('latin1')  # Output as a string
     return pdf_output
 
+topic = ""
 # Function to handle course content and PDF generation/download
 def course_content_ui():
+    global topic
     st.title("Course Content")
     
     st.header("Enter Topic")
@@ -49,14 +50,19 @@ def course_content_ui():
         st.subheader("Course Content for {}".format(topic))
         course_content = api.generate_cours(topic)
         st.write(course_content)
+        
+        # Store course content in session state
+        st.session_state.topic = topic
+        st.session_state.course_content = course_content
+        
         pdf_data = generate_pdf(course_content)
         st.download_button(
-                label="Download PDF",
-                data=pdf_data,
-                file_name="course_content.pdf",
-                mime="application/pdf",
-                key="download_pdf_button"
-            )
+            label="Download PDF",
+            data=pdf_data,
+            file_name="course_content.pdf",
+            mime="application/pdf",
+            key="download_pdf_button"
+        )
 
 # Function to handle chat about confusion
 def chat_ui():
@@ -79,53 +85,92 @@ def chat_ui():
         # Add user message to chat history
         st.session_state.chat_messages.append({"role": "user", "content": prompt})
     
-        response = f"Assistant: It seems like you're confused about '{prompt}'. Let's clarify."
+        response = api.answer_question(st.session_state.course_content, prompt)
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
             st.markdown(response)
         # Add assistant response to chat history
         st.session_state.chat_messages.append({"role": "assistant", "content": response})
 
-# Function to handle quiz chat and store the score
 def quiz_ui():
+    st.session_state.text = ""
+    global topic
     st.title("Start the Quiz")
-
+    
+    # Check if course_content is available in session state
+    if "course_content" not in st.session_state:
+        st.error("No course content available. Please enter a topic in the 'Course Content' tab first.")
+        return
+    
+    course_content = st.session_state.course_content
+    
     # Initialize chat history for quiz tab
     if "quiz_messages" not in st.session_state:
         st.session_state.quiz_messages = []
-    
+
     # Display chat messages from history on a container
     for message in st.session_state.quiz_messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-    
-    # React to user input
-    if prompt := st.chat_input("Ready for a quiz question?"):
-        # Display user message in chat message container
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        # Add user message to chat history
-        st.session_state.quiz_messages.append({"role": "user", "content": prompt})
-    
-        response = "Quiz Question: What is the capital of France?"
-        correct_answer = "Paris"
+
+    # Generate evaluation questions
+    if "questions" not in st.session_state:
+        questions = api.generate_evaluation_questions(course_content)
         
-        # Display assistant response in chat message container
+        st.session_state.questions = [q.strip() for q in questions.split("\n") if q.strip()]
+        st.session_state.questions.pop(0)
+        if len(st.session_state.questions) > 10:
+            st.session_state.questions = st.session_state.questions[:10]
+        st.session_state.question_index = 0
+        st.session_state.total_marks = 0
+        st.session_state.user_answers = []
+
+    # Process the quiz
+    if st.session_state.question_index < len(st.session_state.questions):
+        current_question = st.session_state.questions[st.session_state.question_index]
+        
         with st.chat_message("assistant"):
-            st.markdown(response)
+            st.markdown(f"Quiz Question {st.session_state.question_index + 1}: {current_question}")
+
+        if user_answer := st.chat_input("Your Answer:"):
+            # Store user's answer
+            st.session_state.user_answers.append(user_answer)
+            st.session_state.quiz_messages.append({"role": "user", "content": user_answer})
+
+            # Evaluate user's answer
+            marks_response = api.evaluator(course_content, current_question, user_answer)
+            
+            # Extract marks from the response
+            
+
+            
+            st.session_state.quiz_messages.append({"role": "assistant", "content": marks_response})
+            st.session_state.text = st.session_state.text + "\n\n\n Question : "+ current_question + "\n\n\nAnswer : " + user_answer
+
+            st.session_state.question_index += 1
+            st.experimental_rerun()
+
+    else:
         
-        if prompt.lower() == correct_answer.lower():
-            score = 100
-        else:
-            score = 0
-        
+        with st.chat_message("assistant"):
+            p = api.marks_and_comments( st.session_state.text,st.session_state.topic)
+            st.markdown(p)
+
+
         # Store the quiz score in the database
+        conn = sqlite3.connect('user.db')
+        c = conn.cursor()
         c.execute("INSERT INTO quiz_scores (username, course, score) VALUES (?, ?, ?)",
-                  (st.session_state.username, "Geography", score))
+                  (st.session_state.username, st.session_state.topic, p))
         conn.commit()
-        
-        st.session_state.quiz_messages.append({"role": "assistant", "content": response})
-        st.session_state.quiz_messages.append({"role": "assistant", "content": f"Your score: {score}/100"})
+        conn.close()
+
+        # Reset quiz session state
+        del st.session_state.text
+        del st.session_state.questions
+        del st.session_state.question_index
+        del st.session_state.total_marks
+        del st.session_state.user_answers
 
 # Function to display user info and quiz scores
 def user_info_ui():
@@ -143,7 +188,7 @@ def user_info_ui():
         
         if scores:
             for course, score in scores:
-                st.write(f"Course: {course}, Score: {score}/100")
+                st.write(f"Course: {course}, Score: {score}")
         else:
             st.write("No quiz scores available.")
     else:
@@ -195,6 +240,7 @@ def main():
             confirm_password = st.text_input("Confirm Password", type="password")
 
             if st.button("Register"):
+                
                 if new_password != confirm_password:
                     st.error("Passwords do not match")
                 elif username_exists(new_username):
